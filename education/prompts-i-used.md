@@ -366,5 +366,166 @@ findByContentContaining(String q)
 ---
 
 ## プロンプト 4 以降
+**フェーズ**:アバター機能
 
-3 件目以降も追加可能。書ければ書くほど良い。
+**プロンプト本文**:
+
+
+```
+## ■ S4の目的
+投稿に「イニシャル＋カラーアバター」を追加する。
+
+- 投稿者名の頭文字をアバターとして表示
+- 背景色はDBに保存した avatar_color を使用
+- 視認性の高いSNS風UIにする
+
+---
+
+## ■ 重要制約
+- JavaScript追加は禁止
+- 外部ライブラリ追加禁止
+- 既存機能（投稿・一覧・詳細・いいね）は変更しない
+- 最小変更で実装すること
+
+---
+
+## ■ DB変更（必須）
+postsテーブルに以下カラムを追加：
+
+- avatar_color VARCHAR2(20)
+
+---
+
+## ■ 保存する値（固定）
+以下の文字列で保存する：
+
+- red
+- blue
+- green
+- purple
+- gray
+
+---
+
+## ■ 色の対応（重要）
+UI表示時は以下のUnicode絵文字も併用して表現すること：
+
+- red    ：🔴（U+1F534）
+- blue   ：🔵（U+1F535）
+- green  ：🟢（U+1F7E2）
+- purple ：🟣（U+1F7E3）
+- gray   ：⚪（U+26AA）
+
+※必ずこの対応で固定すること（ブレ禁止）
+
+---
+
+## ■ Entity変更
+Postエンティティに追加：
+- avatarColor（String）
+
+---
+
+## ■ 実装内容
+
+### 1. 投稿作成フォーム
+- アバター色選択UIを追加
+- radioボタンで実装
+- valueは red/blue/green/purple/gray
+- デフォルトは gray
+
+---
+
+### 2. アバター表示（一覧・詳細）
+投稿者名の左にアバターを表示する
+
+アバター仕様：
+- 円形（circle）
+- 背景色：avatarColor
+- 中央に投稿者名の頭文字（イニシャル）
+
+表示例：
+🔵 T  Taro
+🟢 A  Alice
+
+※背景色＋Unicode絵文字＋イニシャルを組み合わせて表示してよい
+
+---
+
+### 3. Thymeleaf
+- 投稿一覧・詳細の両方に表示
+- nullの場合は gray を使用
+- 必ず崩れないようにする
+
+---
+
+## ■ CSS
+- .avatar 共通スタイル（円形・中央揃え）
+- .avatar-red / blue / green / purple / gray
+- 視認性の良いサイズ（32px前後）
+
+---
+
+## ■ Controller / Service
+- avatarColor を受け取る
+- null時は gray
+- 既存ロジック変更禁止
+
+---
+
+## ■ 出力要件
+- DB変更SQL
+- Entity
+- Controller / Service（変更分のみ）
+- Thymeleaf（フォーム＋一覧＋詳細）
+- CSS
+のみ出力すること
+
+---
+
+## ■ ゴール
+色・絵文字・イニシャルを組み合わせた直感的なアバターUIを実装すること
+```
+
+**結果**: 部分的に効いた
+
+```
+
+• S4 のアバター機能を実装しました。
+
+  変更した主なファイル
+
+  - DB変更SQL: src/main/resources/db/migration/V3__post_avatar_color.sql
+
+    ALTER TABLE posts ADD (
+        avatar_color VARCHAR2(20 CHAR)
+    );
+
+  - Entity: src/main/java/com/example/tsubuyaki/domain/Post.java
+  - Form DTO: src/main/java/com/example/tsubuyaki/web/dto/PostForm.java
+  - Controller: src/main/java/com/example/tsubuyaki/controller/PostController.java
+  - Service: src/main/java/com/example/tsubuyaki/service/PostService.java
+  - Thymeleaf:
+      - src/main/resources/templates/posts/form.html
+      - src/main/resources/templates/posts/list.html
+      - src/main/resources/templates/posts/detail.html
+
+  - CSS: src/main/resources/static/css/app.css
+
+  実装内容は、投稿作成フォームに red / blue / green / purple / gray の radio 選択を追加し、未指定時は gray で保存する形です。一覧・詳細では投稿者名の左
+  に、固定対応の絵文字とイニシャル入り円形アバターを表示します。
+
+  検証
+
+  - ./mvnw -B -Ph2 -DforkCount=0 -Dtest=PostFormTest,PostControllerTest,PostServiceTest,PostRepositoryTest test 成功
+  - ./mvnw -B -Ph2 -DforkCount=0 verify 成功
+      - Tests: 36 件成功
+      - Checkstyle: 0 violations
+      - SpotBugs: no errors/warnings
+
+  補足: -DforkCount=0 付きのため JaCoCo は実行データなしでスキップされています。既存の未関連変更ファイルは触っていません。
+```
+
+**振り返り**:
+投稿時のアバター設定、一覧への反映は実装できていたが、
+一覧にUnicode絵文字が表示されてしまっていた。

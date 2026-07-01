@@ -51,7 +51,19 @@ class PostServiceTest {
         Post savedPost = captor.getValue();
         assertThat(savedPost.getAuthor()).isEqualTo("alice");
         assertThat(savedPost.getBody()).isEqualTo("共有事項があります");
+        assertThat(savedPost.getAvatarColor()).isEqualTo("gray");
         assertThat(savedPost.getCreatedAt()).isBetween(before, after);
+    }
+
+    @Test
+    @DisplayName("投稿作成_save実行時_指定したアバター色を持つPostを保存する")
+    void 投稿作成_save実行時_指定したアバター色を持つPostを保存する() {
+        postService.save("alice", "共有事項があります", "purple");
+
+        org.mockito.ArgumentCaptor<Post> captor = org.mockito.ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(captor.capture());
+        Post savedPost = captor.getValue();
+        assertThat(savedPost.getAvatarColor()).isEqualTo("purple");
     }
 
     @Test

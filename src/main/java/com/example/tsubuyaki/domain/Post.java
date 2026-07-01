@@ -29,14 +29,22 @@ public class Post {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "avatar_color", length = 20)
+    private String avatarColor;
+
     protected Post() {
         // JPA
     }
 
     public Post(String author, String body, Instant createdAt) {
+        this(author, body, createdAt, "gray");
+    }
+
+    public Post(String author, String body, Instant createdAt, String avatarColor) {
         this.author = author;
         this.body = body;
         this.createdAt = createdAt;
+        this.avatarColor = avatarColor;
     }
 
     public Long getId() {
@@ -53,6 +61,13 @@ public class Post {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getAvatarColor() {
+        if (avatarColor == null || avatarColor.isBlank()) {
+            return "gray";
+        }
+        return avatarColor;
     }
 
     @Override

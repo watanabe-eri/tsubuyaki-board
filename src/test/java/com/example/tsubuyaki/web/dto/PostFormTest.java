@@ -36,6 +36,14 @@ class PostFormTest {
     }
 
     @Test
+    @DisplayName("投稿フォーム_初期状態の場合_アバター色はgrayになる")
+    void 投稿フォーム_初期状態の場合_アバター色はgrayになる() {
+        PostForm form = new PostForm();
+
+        assertThat(form.getAvatarColor()).isEqualTo("gray");
+    }
+
+    @Test
     @DisplayName("投稿フォーム_投稿者と本文が最大文字数の場合_バリデーションエラーにならない")
     void 投稿フォーム_投稿者と本文が最大文字数の場合_バリデーションエラーにならない() {
         PostForm form = new PostForm();
@@ -75,5 +83,21 @@ class PostFormTest {
                 .contains("author", "body");
         assertThat(violations).extracting(ConstraintViolation::getMessage)
                 .contains("投稿者名は 30 文字以内で入力してください", "本文は 280 文字以内で入力してください");
+    }
+
+    @Test
+    @DisplayName("投稿フォーム_アバター色が許可値以外の場合_Patternエラーになる")
+    void 投稿フォーム_アバター色が許可値以外の場合_Patternエラーになる() {
+        PostForm form = new PostForm();
+        form.setAuthor("alice");
+        form.setBody("共有事項があります");
+        form.setAvatarColor("orange");
+
+        Set<ConstraintViolation<PostForm>> violations = VALIDATOR.validate(form);
+
+        assertThat(violations).extracting(violation -> violation.getPropertyPath().toString())
+                .contains("avatarColor");
+        assertThat(violations).extracting(ConstraintViolation::getMessage)
+                .contains("アバター色を選択してください");
     }
 }

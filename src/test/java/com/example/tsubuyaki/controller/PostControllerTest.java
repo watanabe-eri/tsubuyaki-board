@@ -59,11 +59,12 @@ class PostControllerTest {
     void 投稿作成_入力値が正常な場合_Serviceを呼び出しpostsへリダイレクトする() throws Exception {
         mockMvc.perform(post("/posts")
                         .param("author", "alice")
-                        .param("body", "共有事項があります"))
+                        .param("body", "共有事項があります")
+                        .param("avatarColor", "blue"))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/posts"));
 
-        verify(postService).save("alice", "共有事項があります");
+        verify(postService).save("alice", "共有事項があります", "blue");
     }
 
     @Test
@@ -77,6 +78,7 @@ class PostControllerTest {
                 .andExpect(model().attributeHasFieldErrors("postForm", "author", "body"));
 
         verify(postService, never()).save(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyString());
     }
 

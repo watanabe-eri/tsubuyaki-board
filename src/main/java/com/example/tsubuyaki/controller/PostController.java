@@ -50,7 +50,7 @@ public class PostController {
         if (bindingResult.hasErrors()) {
             return "posts/form";
         }
-        postService.save(postForm.getAuthor(), postForm.getBody());
+        postService.save(postForm.getAuthor(), postForm.getBody(), postForm.getAvatarColor());
         return "redirect:/posts";
     }
 
