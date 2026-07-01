@@ -28,6 +28,9 @@
             <time class="post__created-at"
                   th:datetime="${post.createdAt}"
                   th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2026-05-23 09:00</time>
+            <p class="post__actions">
+                <a th:href="@{/posts/{id}(id=${post.id})}">詳細を見る</a>
+            </p>
         </article>
     </section>
 </main>

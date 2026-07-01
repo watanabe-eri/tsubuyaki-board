@@ -53,6 +53,15 @@ h1 {
     font-size: 0.85rem;
 }
 
+.post__actions {
+    margin: 0.75rem 0 0;
+}
+
+.post__actions a {
+    color: var(--color-accent);
+    font-size: 0.9rem;
+}
+
 .post__body {
     margin-top: 0.5rem;
     white-space: pre-wrap;

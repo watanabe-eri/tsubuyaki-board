@@ -9,10 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -73,6 +75,29 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("投稿詳細_存在するIDの場合_posts_detailを表示しModelにpostを追加する")
+    void 投稿詳細_存在するIDの場合_posts_detailを表示しModelにpostを追加する() throws Exception {
+        Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
+        given(postService.findById(1L)).willReturn(Optional.of(post));
+
+        mockMvc.perform(get("/posts/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("posts/detail"))
+                .andExpect(model().attribute("post", post))
+                .andExpect(content().string(containsString("alice")))
+                .andExpect(content().string(containsString("共有事項があります")));
+    }
+
+    @Test
+    @DisplayName("投稿詳細_存在しないIDの場合_404を返す")
+    void 投稿詳細_存在しないIDの場合_404を返す() throws Exception {
+        given(postService.findById(999L)).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/posts/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("投稿一覧_0件の場合_まだ投稿はありませんを表示できていること")
     void 投稿一覧_0件の場合_まだ投稿はありませんを表示できていること() throws Exception {
         given(postService.latest()).willReturn(Collections.emptyList());
@@ -98,11 +123,14 @@ class PostControllerTest {
     @Test
     @DisplayName("投稿一覧_投稿がある場合_投稿者内容投稿日の順に表示できていること")
     void 投稿一覧_投稿がある場合_投稿者内容投稿日の順に表示できていること() throws Exception {
-        given(postService.latest()).willReturn(List.of(
-                new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"))));
+        Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
+        ReflectionTestUtils.setField(post, "id", 1L);
+        given(postService.latest()).willReturn(List.of(post));
 
         mockMvc.perform(get("/posts"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/posts/1\"")))
+                .andExpect(content().string(containsString("詳細を見る")))
                 .andExpect(result -> {
                     String html = result.getResponse().getContentAsString();
                     int authorIndex = html.indexOf("alice");
