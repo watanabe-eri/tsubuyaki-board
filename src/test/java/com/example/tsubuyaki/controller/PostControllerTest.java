@@ -1,6 +1,7 @@
 package com.example.tsubuyaki.controller;
 
 import com.example.tsubuyaki.domain.Post;
+import com.example.tsubuyaki.service.LikeService;
 import com.example.tsubuyaki.service.PostService;
 import com.example.tsubuyaki.web.dto.PostForm;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +19,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,6 +40,9 @@ class PostControllerTest {
 
     @MockitoBean
     private PostService postService;
+
+    @MockitoBean
+    private LikeService likeService;
 
     @Test
     @DisplayName("投稿フォーム_GET_posts_new_ModelにPostFormを追加しposts_formを返す")
@@ -79,13 +85,19 @@ class PostControllerTest {
     void 投稿詳細_存在するIDの場合_posts_detailを表示しModelにpostを追加する() throws Exception {
         Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
         given(postService.findById(1L)).willReturn(Optional.of(post));
+        given(likeService.countByPostId(1L)).willReturn(3L);
+        given(likeService.isLiked(eq(1L), anyString())).willReturn(true);
 
         mockMvc.perform(get("/posts/1"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("posts/detail"))
                 .andExpect(model().attribute("post", post))
+                .andExpect(model().attribute("likeCount", 3L))
+                .andExpect(model().attribute("liked", true))
                 .andExpect(content().string(containsString("alice")))
-                .andExpect(content().string(containsString("共有事項があります")));
+                .andExpect(content().string(containsString("共有事項があります")))
+                .andExpect(content().string(containsString("3")))
+                .andExpect(content().string(containsString("いいね解除")));
     }
 
     @Test
@@ -95,6 +107,21 @@ class PostControllerTest {
 
         mockMvc.perform(get("/posts/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("いいね切替_POST_posts_id_likes_ClientHashを生成しServiceを呼び出して詳細へリダイレクトする")
+    void いいね切替_POST_posts_id_likes_ClientHashを生成しServiceを呼び出して詳細へリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/1/likes")
+                        .with(request -> {
+                            request.setRemoteAddr("192.0.2.10");
+                            return request;
+                        })
+                        .header("User-Agent", "JUnit"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/posts/1"));
+
+        verify(likeService).toggle(org.mockito.ArgumentMatchers.eq(1L), anyString());
     }
 
     @Test
