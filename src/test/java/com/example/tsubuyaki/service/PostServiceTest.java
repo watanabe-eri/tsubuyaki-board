@@ -36,4 +36,20 @@ class PostServiceTest {
         assertThat(latestPosts).isEqualTo(posts);
         verify(postRepository).findTop50ByOrderByCreatedAtDesc();
     }
+
+    @Test
+    @DisplayName("投稿作成_save実行時_投稿者本文作成日時を持つPostを保存する")
+    void 投稿作成_save実行時_投稿者本文作成日時を持つPostを保存する() {
+        Instant before = Instant.now();
+
+        postService.save("alice", "共有事項があります");
+
+        Instant after = Instant.now();
+        org.mockito.ArgumentCaptor<Post> captor = org.mockito.ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(captor.capture());
+        Post savedPost = captor.getValue();
+        assertThat(savedPost.getAuthor()).isEqualTo("alice");
+        assertThat(savedPost.getBody()).isEqualTo("共有事項があります");
+        assertThat(savedPost.getCreatedAt()).isBetween(before, after);
+    }
 }
