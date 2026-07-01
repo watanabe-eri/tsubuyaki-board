@@ -65,4 +65,28 @@ class PostServiceTest {
         assertThat(foundPost).contains(post);
         verify(postRepository).findById(1L);
     }
+
+    @Test
+    @DisplayName("投稿一覧_search実行時_キーワード空なら新着一覧を返す")
+    void 投稿一覧_search実行時_キーワード空なら新着一覧を返す() {
+        List<Post> posts = List.of(new Post("alice", "hello", Instant.parse("2026-05-23T10:00:00Z")));
+        given(postRepository.findTop50ByOrderByCreatedAtDesc()).willReturn(posts);
+
+        List<Post> foundPosts = postService.search("   ");
+
+        assertThat(foundPosts).isEqualTo(posts);
+        verify(postRepository).findTop50ByOrderByCreatedAtDesc();
+    }
+
+    @Test
+    @DisplayName("投稿一覧_search実行時_キーワードありなら本文検索結果を返す")
+    void 投稿一覧_search実行時_キーワードありなら本文検索結果を返す() {
+        List<Post> posts = List.of(new Post("alice", "Spring", Instant.parse("2026-05-23T10:00:00Z")));
+        given(postRepository.findTop50ByBodyContainingOrderByCreatedAtDesc("Spring")).willReturn(posts);
+
+        List<Post> foundPosts = postService.search("Spring");
+
+        assertThat(foundPosts).isEqualTo(posts);
+        verify(postRepository).findTop50ByBodyContainingOrderByCreatedAtDesc("Spring");
+    }
 }

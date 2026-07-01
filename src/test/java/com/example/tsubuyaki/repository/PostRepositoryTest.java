@@ -39,4 +39,17 @@ class PostRepositoryTest {
                 .startsWith("user-59", "user-58", "user-57")
                 .endsWith("user-12", "user-11", "user-10");
     }
+
+    @Test
+    @DisplayName("投稿検索_本文にキーワードを含む場合_新着順で返す")
+    void 投稿検索_本文にキーワードを含む場合_新着順で返す() {
+        postRepository.save(new Post("alice", "Spring Boot のメモ", Instant.parse("2026-05-23T10:00:00Z")));
+        postRepository.save(new Post("bob", "Oracle のメモ", Instant.parse("2026-05-23T10:05:00Z")));
+        postRepository.save(new Post("carol", "Spring Data JPA のメモ", Instant.parse("2026-05-23T10:10:00Z")));
+
+        List<Post> posts = postRepository.findTop50ByBodyContainingOrderByCreatedAtDesc("Spring");
+
+        assertThat(posts).extracting(Post::getAuthor)
+                .containsExactly("carol", "alice");
+    }
 }

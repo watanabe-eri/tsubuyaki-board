@@ -35,6 +35,10 @@ h1 {
     margin: 1rem 0;
 }
 
+.search-form {
+    margin: 1rem 0 1.5rem;
+}
+
 .post {
     padding: 1rem;
     border: 1px solid var(--color-border);

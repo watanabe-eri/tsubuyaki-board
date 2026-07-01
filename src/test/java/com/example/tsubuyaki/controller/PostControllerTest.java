@@ -84,6 +84,7 @@ class PostControllerTest {
     @DisplayName("投稿詳細_存在するIDの場合_posts_detailを表示しModelにpostを追加する")
     void 投稿詳細_存在するIDの場合_posts_detailを表示しModelにpostを追加する() throws Exception {
         Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
+        ReflectionTestUtils.setField(post, "id", 1L);
         given(postService.findById(1L)).willReturn(Optional.of(post));
         given(likeService.countByPostId(1L)).willReturn(3L);
         given(likeService.isLiked(eq(1L), anyString())).willReturn(true);
@@ -97,7 +98,8 @@ class PostControllerTest {
                 .andExpect(content().string(containsString("alice")))
                 .andExpect(content().string(containsString("共有事項があります")))
                 .andExpect(content().string(containsString("3")))
-                .andExpect(content().string(containsString("いいね解除")));
+                .andExpect(content().string(containsString("❤️")))
+                .andExpect(content().string(containsString("いいね")));
     }
 
     @Test
@@ -127,7 +129,7 @@ class PostControllerTest {
     @Test
     @DisplayName("投稿一覧_0件の場合_まだ投稿はありませんを表示できていること")
     void 投稿一覧_0件の場合_まだ投稿はありませんを表示できていること() throws Exception {
-        given(postService.latest()).willReturn(Collections.emptyList());
+        given(postService.search(null)).willReturn(Collections.emptyList());
 
         mockMvc.perform(get("/posts"))
                 .andExpect(status().isOk())
@@ -139,7 +141,7 @@ class PostControllerTest {
     @Test
     @DisplayName("投稿一覧_更新ボタンがある場合_押すとpostsにリクエストすること")
     void 投稿一覧_更新ボタンがある場合_押すとpostsにリクエストすること() throws Exception {
-        given(postService.latest()).willReturn(Collections.emptyList());
+        given(postService.search(null)).willReturn(Collections.emptyList());
 
         mockMvc.perform(get("/posts"))
                 .andExpect(status().isOk())
@@ -152,7 +154,7 @@ class PostControllerTest {
     void 投稿一覧_投稿がある場合_投稿者内容投稿日の順に表示できていること() throws Exception {
         Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
         ReflectionTestUtils.setField(post, "id", 1L);
-        given(postService.latest()).willReturn(List.of(post));
+        given(postService.search(null)).willReturn(List.of(post));
 
         mockMvc.perform(get("/posts"))
                 .andExpect(status().isOk())
@@ -168,5 +170,21 @@ class PostControllerTest {
                     assertThat(bodyIndex).isGreaterThan(authorIndex);
                     assertThat(createdAtIndex).isGreaterThan(bodyIndex);
                 });
+    }
+
+    @Test
+    @DisplayName("投稿一覧_q指定ありの場合_検索結果を一覧表示し入力値を保持する")
+    void 投稿一覧_q指定ありの場合_検索結果を一覧表示し入力値を保持する() throws Exception {
+        Post post = new Post("alice", "Spring Boot のメモ", Instant.parse("2026-05-23T10:15:00Z"));
+        given(postService.search("Spring")).willReturn(List.of(post));
+
+        mockMvc.perform(get("/posts").param("q", "Spring"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("posts/list"))
+                .andExpect(model().attribute("q", "Spring"))
+                .andExpect(model().attribute("posts", List.of(post)))
+                .andExpect(content().string(containsString("name=\"q\"")))
+                .andExpect(content().string(containsString("value=\"Spring\"")))
+                .andExpect(content().string(containsString("Spring Boot のメモ")));
     }
 }

@@ -215,6 +215,16 @@ S1機能として「いいね機能」を実装してください。
 ```
 
 **結果**: 効いた
+```
+• detail.html の「いいね済み」文言を削除しました。
+
+  現在は状態に応じてこう表示されます。
+
+  - 未いいね: ♡ いいね 1
+  - いいね済み: ❤️ いいね 1
+
+  Java / Service / Controller / DB は変更していません。
+```
 
 **振り返り**:
 いいね済みであることが、視覚的にわかりやすくなったので、「いいね済み」の「済み」は削除した。
@@ -223,17 +233,135 @@ S1機能として「いいね機能」を実装してください。
 
 ## プロンプト 3
 
-**フェーズ**:
+**フェーズ**:検索機能
 
 **プロンプト本文**:
 
 ```
+## ■ S2の目的
+投稿一覧画面を再利用し、
+キーワード検索機能を追加する。
 
+---
+
+## ■ 要件
+
+### 1. 検索仕様
+- エンドポイント：GET /posts
+- クエリパラメータ：q
+- 検索対象：投稿本文（content）
+- 検索条件：LIKE検索（部分一致）
+
+例：
+/posts?q=hello → 本文に "hello" を含む投稿を表示
+
+---
+
+### 2. 画面仕様（Thymeleaf）
+一覧画面の上部に検索フォームを追加する：
+
+- input name="q"
+- GET送信
+- 現在の検索キーワードはinputに保持する
+- 検索ボタンあり
+
+---
+
+### 3. 一覧再利用ルール
+- 投稿一覧画面（既存テンプレート）をそのまま使用する
+- 新規画面は作らない
+- 検索結果も同じ一覧テンプレートで表示する
+
+---
+
+## ■ 実装制約（重要）
+- 既存の投稿一覧画面の構造は極力変更しない
+- Service / Controller / Repository の責務は維持する
+- DB変更は禁止
+- API設計の大幅変更は禁止
+- POST系の既存機能に影響を与えないこと
+- JavaScript追加は禁止（HTMLフォームのみで実装）
+
+---
+
+## ■ 実装指針
+
+### Controller
+- /posts は GETで q を受け取る
+- q が null または空文字の場合は全件取得
+- q がある場合のみ検索処理を実行
+
+---
+
+### Repository
+- content に対して LIKE 検索を行うメソッドを追加する
+- Spring Data JPAの命名規則を使用する（@Queryでも可）
+例：
+findByContentContaining(String q)
+
+---
+
+### Service
+- 全件取得と検索処理を分岐させる
+
+---
+
+### Thymeleaf
+- 検索フォームを一覧上部に追加
+- GETで /posts?q=xxx に送信
+- 入力値は保持する（value="${q}"）
+
+---
+
+## ■ 表示例
+
+検索なし：
+/posts → 全投稿表示
+
+検索あり：
+/posts?q=spring → "spring"を含む投稿のみ表示
+
+---
+
+## ■ 出力要件
+- 変更した Controller / Service / Repository / Thymeleaf のみ出力
+- 新規アーキテクチャ追加は禁止
+- 最小変更で実装すること
+- 既存機能を壊さないこと
 ```
 
-**結果**: 効いた / 部分的に効いた / 効かなかった
+**結果**: 効いた
+```
+• 実装しました。変更した実装ファイルは以下です。
+
+  - src/main/java/com/example/tsubuyaki/controller/PostController.java
+  - src/main/java/com/example/tsubuyaki/service/PostService.java
+  - src/main/java/com/example/tsubuyaki/repository/PostRepository.java
+  - src/main/resources/templates/posts/list.html
+
+  内容:
+
+  - GET /posts?q=... を受け取るように変更
+  - q が空なら既存の新着50件
+  - q があれば body に対する部分一致検索
+  - 一覧テンプレート上部に GET 検索フォームを追加
+  - 入力値 q を保持
+
+  検証:
+
+  ./mvnw -B -Ph2 -DforkCount=0 -Dtest=PostRepositoryTest,PostServiceTest,PostControllerTest test
+
+  結果: Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+
+  ./mvnw -B -Ph2 -DskipTests checkstyle:check spotbugs:check
+
+  結果: Checkstyle 0件、SpotBugs 0件です。
+```
+
 
 **振り返り**:
+検索処理は問題なく実装できていた。
+ワード入力のテキストボックスの下側余白が足りなかったので、ＵＩの指示を追加するとより効果的かもしれない。
 
 ---
 
