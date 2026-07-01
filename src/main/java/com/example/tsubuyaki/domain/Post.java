@@ -37,7 +37,7 @@ public class Post {
     }
 
     public Post(String author, String body, Instant createdAt) {
-        this(author, body, createdAt, "gray");
+        this(author, body, createdAt, "blue");
     }
 
     public Post(String author, String body, Instant createdAt, String avatarColor) {
@@ -65,7 +65,7 @@ public class Post {
 
     public String getAvatarColor() {
         if (avatarColor == null || avatarColor.isBlank()) {
-            return "gray";
+            return "blue";
         }
         return avatarColor;
     }

@@ -51,7 +51,7 @@ class PostServiceTest {
         Post savedPost = captor.getValue();
         assertThat(savedPost.getAuthor()).isEqualTo("alice");
         assertThat(savedPost.getBody()).isEqualTo("共有事項があります");
-        assertThat(savedPost.getAvatarColor()).isEqualTo("gray");
+        assertThat(savedPost.getAvatarColor()).isEqualTo("blue");
         assertThat(savedPost.getCreatedAt()).isBetween(before, after);
     }
 

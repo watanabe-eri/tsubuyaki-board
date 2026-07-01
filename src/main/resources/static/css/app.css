@@ -39,6 +39,35 @@ h1 {
     margin: 1rem 0 1.5rem;
 }
 
+.page-nav {
+    margin-bottom: 1.5rem;
+}
+
+.post-form {
+    max-width: 100%;
+}
+
+.post-form__field {
+    margin-bottom: 1rem;
+}
+
+.post-form__field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.post-form__field input[type="text"],
+.post-form__field textarea {
+    display: block;
+    font: inherit;
+    width: 100%;
+}
+
+.post-form__field textarea {
+    resize: vertical;
+}
+
 .post {
     padding: 1rem;
     border: 1px solid var(--color-border);
@@ -94,8 +123,9 @@ h1 {
     background: #7c3aed;
 }
 
-.avatar-gray {
-    background: #6b7280;
+.avatar-yellow {
+    background: #eab308;
+    color: #422006;
 }
 
 .avatar-picker {

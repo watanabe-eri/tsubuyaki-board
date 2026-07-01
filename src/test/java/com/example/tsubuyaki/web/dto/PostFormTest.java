@@ -36,11 +36,11 @@ class PostFormTest {
     }
 
     @Test
-    @DisplayName("投稿フォーム_初期状態の場合_アバター色はgrayになる")
-    void 投稿フォーム_初期状態の場合_アバター色はgrayになる() {
+    @DisplayName("投稿フォーム_初期状態の場合_アバター色はblueになる")
+    void 投稿フォーム_初期状態の場合_アバター色はblueになる() {
         PostForm form = new PostForm();
 
-        assertThat(form.getAvatarColor()).isEqualTo("gray");
+        assertThat(form.getAvatarColor()).isEqualTo("blue");
     }
 
     @Test
@@ -49,6 +49,19 @@ class PostFormTest {
         PostForm form = new PostForm();
         form.setAuthor("a".repeat(30));
         form.setBody("b".repeat(280));
+
+        Set<ConstraintViolation<PostForm>> violations = VALIDATOR.validate(form);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    @DisplayName("投稿フォーム_アバター色がyellowの場合_バリデーションエラーにならない")
+    void 投稿フォーム_アバター色がyellowの場合_バリデーションエラーにならない() {
+        PostForm form = new PostForm();
+        form.setAuthor("alice");
+        form.setBody("共有事項があります");
+        form.setAvatarColor("yellow");
 
         Set<ConstraintViolation<PostForm>> violations = VALIDATOR.validate(form);
 
