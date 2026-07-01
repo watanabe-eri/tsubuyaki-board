@@ -16,13 +16,6 @@
     <article class="post">
         <header class="post__header">
             <span class="avatar" th:classappend="'avatar-' + ${post.avatarColor}">
-                <span class="avatar__emoji" th:switch="${post.avatarColor}">
-                    <span th:case="'red'">🔴</span>
-                    <span th:case="'blue'">🔵</span>
-                    <span th:case="'green'">🟢</span>
-                    <span th:case="'purple'">🟣</span>
-                    <span th:case="*">⚪</span>
-                </span>
                 <span class="avatar__initial" th:text="${#strings.substring(post.author, 0, 1)}">T</span>
             </span>
             <span class="post__author" th:text="${post.author}">投稿者</span>
