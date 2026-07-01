@@ -69,6 +69,19 @@ class PostFormTest {
     }
 
     @Test
+    @DisplayName("投稿フォーム_アバター色がorangeの場合_バリデーションエラーにならない")
+    void 投稿フォーム_アバター色がorangeの場合_バリデーションエラーにならない() {
+        PostForm form = new PostForm();
+        form.setAuthor("alice");
+        form.setBody("共有事項があります");
+        form.setAvatarColor("orange");
+
+        Set<ConstraintViolation<PostForm>> violations = VALIDATOR.validate(form);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
     @DisplayName("投稿フォーム_投稿者と本文が空白のみの場合_NotBlankエラーになる")
     void 投稿フォーム_投稿者と本文が空白のみの場合_NotBlankエラーになる() {
         PostForm form = new PostForm();
@@ -104,7 +117,7 @@ class PostFormTest {
         PostForm form = new PostForm();
         form.setAuthor("alice");
         form.setBody("共有事項があります");
-        form.setAvatarColor("orange");
+        form.setAvatarColor("black");
 
         Set<ConstraintViolation<PostForm>> violations = VALIDATOR.validate(form);
 

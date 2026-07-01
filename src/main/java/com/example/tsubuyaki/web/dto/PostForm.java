@@ -14,7 +14,7 @@ public class PostForm {
     @Size(max = 280, message = "本文は 280 文字以内で入力してください")
     private String body;
 
-    @Pattern(regexp = "red|blue|green|purple|yellow", message = "アバター色を選択してください")
+    @Pattern(regexp = "red|blue|green|purple|yellow|orange", message = "アバター色を選択してください")
     private String avatarColor = "blue";
 
     public PostForm() {

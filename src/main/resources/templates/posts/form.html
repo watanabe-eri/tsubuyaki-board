@@ -46,6 +46,10 @@
                 <input type="radio" th:field="*{avatarColor}" value="yellow">
                 <span>🟡 yellow</span>
             </label>
+            <label>
+                <input type="radio" th:field="*{avatarColor}" value="orange">
+                <span>🟠 orange</span>
+            </label>
             <p class="error" th:if="${#fields.hasErrors('avatarColor')}" th:errors="*{avatarColor}">エラー</p>
         </fieldset>
         <button type="submit">投稿</button>
