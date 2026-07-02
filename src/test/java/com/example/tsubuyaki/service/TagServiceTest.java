@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -23,6 +24,9 @@ class TagServiceTest {
 
     @Mock
     private PostTagRepository postTagRepository;
+
+    @Mock
+    private TagExtractor tagExtractor;
 
     @InjectMocks
     private TagService tagService;
@@ -51,5 +55,18 @@ class TagServiceTest {
 
         assertThat(posts).isEmpty();
         verify(postTagRepository).findByTag_NameOrderByPost_CreatedAtDesc("unknown");
+    }
+
+    @Test
+    @DisplayName("タグ表示用一覧_投稿一覧を受け取った場合_PostIdごとのタグ名一覧を返す")
+    void タグ表示用一覧_投稿一覧を受け取った場合_PostIdごとのタグ名一覧を返す() {
+        Post post = new Post("alice", "Spring Boot #java #spring", Instant.parse("2026-05-23T10:15:00Z"));
+        org.springframework.test.util.ReflectionTestUtils.setField(post, "id", 1L);
+        given(tagExtractor.extract("Spring Boot #java #spring")).willReturn(List.of("java", "spring"));
+
+        Map<Long, List<String>> tagsByPostId = tagService.extractTagsByPostId(List.of(post));
+
+        assertThat(tagsByPostId).containsEntry(1L, List.of("java", "spring"));
+        verify(tagExtractor).extract("Spring Boot #java #spring");
     }
 }

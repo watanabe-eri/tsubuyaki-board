@@ -3,6 +3,7 @@ package com.example.tsubuyaki.controller;
 import com.example.tsubuyaki.domain.Post;
 import com.example.tsubuyaki.service.LikeService;
 import com.example.tsubuyaki.service.PostService;
+import com.example.tsubuyaki.service.TagService;
 import com.example.tsubuyaki.web.dto.PostForm;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +45,9 @@ class PostControllerTest {
 
     @MockitoBean
     private LikeService likeService;
+
+    @MockitoBean
+    private TagService tagService;
 
     @Test
     @DisplayName("投稿フォーム_GET_posts_new_ModelにPostFormを追加しposts_formを返す")
@@ -157,6 +162,7 @@ class PostControllerTest {
         Post post = new Post("alice", "共有事項があります", Instant.parse("2026-05-23T10:15:00Z"));
         ReflectionTestUtils.setField(post, "id", 1L);
         given(postService.search(null)).willReturn(List.of(post));
+        given(tagService.extractTagsByPostId(List.of(post))).willReturn(Map.of(1L, List.of()));
 
         mockMvc.perform(get("/posts"))
                 .andExpect(status().isOk())
@@ -175,10 +181,28 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("投稿一覧_本文にタグがある場合_本文の下にタグリンクを表示する")
+    void 投稿一覧_本文にタグがある場合_本文の下にタグリンクを表示する() throws Exception {
+        Post post = new Post("alice", "Spring Boot のメモ #java #spring", Instant.parse("2026-05-23T10:15:00Z"));
+        ReflectionTestUtils.setField(post, "id", 1L);
+        given(postService.search(null)).willReturn(List.of(post));
+        given(tagService.extractTagsByPostId(List.of(post))).willReturn(Map.of(1L, List.of("java", "spring")));
+
+        mockMvc.perform(get("/posts"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("tagsByPostId", Map.of(1L, List.of("java", "spring"))))
+                .andExpect(content().string(containsString("href=\"/tags/java\"")))
+                .andExpect(content().string(containsString(">#java</a>")))
+                .andExpect(content().string(containsString("href=\"/tags/spring\"")))
+                .andExpect(content().string(containsString(">#spring</a>")));
+    }
+
+    @Test
     @DisplayName("投稿一覧_q指定ありの場合_検索結果を一覧表示し入力値を保持する")
     void 投稿一覧_q指定ありの場合_検索結果を一覧表示し入力値を保持する() throws Exception {
         Post post = new Post("alice", "Spring Boot のメモ", Instant.parse("2026-05-23T10:15:00Z"));
         given(postService.search("Spring")).willReturn(List.of(post));
+        given(tagService.extractTagsByPostId(List.of(post))).willReturn(Map.of());
 
         mockMvc.perform(get("/posts").param("q", "Spring"))
                 .andExpect(status().isOk())

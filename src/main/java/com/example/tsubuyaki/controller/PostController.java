@@ -1,7 +1,9 @@
 package com.example.tsubuyaki.controller;
 
+import com.example.tsubuyaki.domain.Post;
 import com.example.tsubuyaki.service.LikeService;
 import com.example.tsubuyaki.service.PostService;
+import com.example.tsubuyaki.service.TagService;
 import com.example.tsubuyaki.web.dto.PostForm;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -19,6 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 public class PostController {
@@ -27,15 +32,20 @@ public class PostController {
 
     private final LikeService likeService;
 
-    public PostController(PostService postService, LikeService likeService) {
+    private final TagService tagService;
+
+    public PostController(PostService postService, LikeService likeService, TagService tagService) {
         this.postService = postService;
         this.likeService = likeService;
+        this.tagService = tagService;
     }
 
     @GetMapping({ "/", "/posts" })
     public String list(@RequestParam(required = false) String q, Model model) {
-        model.addAttribute("posts", postService.search(q));
+        List<Post> posts = postService.search(q);
+        model.addAttribute("posts", posts);
         model.addAttribute("q", q);
+        model.addAttribute("tagsByPostId", tagsByPostId(posts));
         return "posts/list";
     }
 
@@ -77,5 +87,13 @@ public class PostController {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm is not available", e);
         }
+    }
+
+    private Map<Long, List<String>> tagsByPostId(List<Post> posts) {
+        Map<Long, List<String>> tagsByPostId = tagService.extractTagsByPostId(posts);
+        if (tagsByPostId == null) {
+            return Map.of();
+        }
+        return new LinkedHashMap<>(tagsByPostId);
     }
 }
