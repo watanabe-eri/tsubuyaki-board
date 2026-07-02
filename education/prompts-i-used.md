@@ -530,6 +530,7 @@ Postエンティティに追加：
 投稿時のアバター設定、一覧への反映は実装できていたが、
 一覧と詳細画面に余分なUnicode絵文字が表示されてしまっていた。
 
+
 ## プロンプト 5
 **フェーズ**:カバレッジ テスト拡充
 
@@ -644,6 +645,410 @@ planeモードに切り替えるのを失念しており、実装まで行われ
 
 
 
+## プロンプト 8
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+タグ機能を実装します。
+
+まずはデータベース設計としてFlywayマイグレーションを追加してください。
+
+設計方針
+- 投稿とタグは多対多とする
+- 投稿本文に複数の #tag を含められる
+- 同じタグを複数投稿で共有できる
+
+追加するもの
+- tagsテーブル
+- tags_seq
+- post_tagsテーブル
+
+要件
+- Oracle XEおよびH2(MODE=Oracle)で動作するDDL
+- tags.idはSequence採番
+- tags.nameはNOT NULL・UNIQUE
+- post_tagsは(post_id, tag_id)を複合主キー
+- posts.id、tags.idへの外部キーを設定
+- V1__init.sqlの命名規則に合わせる
+- Javaコードは変更しない
+```
+**結果**: 効いた
+
+```
+• 提案
+  タグ機能用の DB 設計として、Flyway マイグレーション src/main/resources/db/migration/V4__tags.sql:1 を追加しました。Java コードは変更していません。
+
+  根拠
+  既存の V1__init.sql / V2__likes.sql に合わせて、Oracle XE 21c と H2 MODE=Oracle で読める NUMBER、VARCHAR2、CREATE SEQUENCE ... NOCACHE 形式にしています。
+
+  差分
+  追加内容:
+
+  - tags_seq
+  - tags
+      - id NUMBER(19) NOT NULL
+      - name VARCHAR2(50 CHAR) NOT NULL
+      - tags_pk
+      - tags_name_uk
+
+  - post_tags
+      - post_id, tag_id
+      - 複合主キー (post_id, tag_id)
+      - posts(id) / tags(id) への外部キー
+
+  - post_tags_tag_id_idx
+
+  確認
+  H2 Oracle モードで Flyway マイグレーションが通ることを確認しました。
+
+  ./mvnw -Dtest=H2SeedMigrationTest test
+
+  結果:
+
+  Migrating schema "PUBLIC" to version "4 - tags"
+  Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+  BUILD SUCCESS
+```
+
+**振り返り**:
+プロンプト文をAIに相談しながら組み立てた。
+問題なくテーブルが作成された。
+
+
+## プロンプト 9
+**フェーズ**:C1: タグ機能
+
+
+**プロンプト本文**:
+
+```
+Flywayの追加は完了しました。
+
+次にTagエンティティを実装してください。
+
+要件
+- tagsテーブルに対応するJPAエンティティ
+- 既存のPostエンティティと同じコーディングスタイル
+- SequenceGeneratorを使用
+- equals()/hashCode()もPostと同じ方針
+- getterのみ実装
+- コンストラクタの書き方もPostに合わせる
+
+今回はTagエンティティのみ実装してください。
+Postとの関連付け(@ManyToMany等)やRepositoryはまだ実装しません。
+```
+**結果**: 効いた
+
+```
+• 提案
+  tags テーブルに対応する Tag エンティティを追加しました。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/domain/Tag.java:1
+
+  実装内容:
+
+  - @Entity
+  - @Table(name = "tags")
+  - tags_seq を使う @SequenceGenerator
+  - id, name フィールド
+  - getter のみ
+  - protected Tag() + public Tag(String name)
+  - Post と同じ id ベースの equals() / hashCode()
+
+  Post との @ManyToMany 関連や Repository は追加していません。
+
+  確認
+  コンパイル確認済みです。
+
+  ./mvnw -DskipTests compile
+
+  結果:
+
+  BUILD SUCCESS
+
+```
+
+**振り返り**:
+
+
+
+## プロンプト 10
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+Tagエンティティの実装が完了しました。
+
+次にTagRepositoryを実装してください。
+
+要件
+- JpaRepository<Tag, Long>を継承
+- タグ名で検索できるfindByName(String name)を追加
+- 必要に応じて一覧取得用メソッドを追加してよい
+
+今回はRepositoryのみ実装してください。
+ServiceやController、Postとの関連付けはまだ実装しません。
+```
+
+**結果**: 効いた
+
+```
+
+• 提案
+  TagRepository を追加しました。今回は指定どおり Repository のみです。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/repository/TagRepository.java:1
+
+  実装内容:
+
+  public interface TagRepository extends JpaRepository<Tag, Long> {
+
+      Optional<Tag> findByName(String name);
+  }
+
+  一覧取得用メソッドは、現時点で具体的な利用箇所がないため追加していません。JpaRepository 標準の findAll() で足ります。
+
+  確認
+  コンパイル確認済みです。
+
+  ./mvnw -DskipTests compile
+
+  結果:
+
+  BUILD SUCCESS
+```
+
+**振り返り**:
+問題なし。詳細に指示ができた。
+
+
+## プロンプト 11
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+タグ機能の続きです。
+
+現在までに以下は実装済みです。
+- Flywayで tags / post_tags テーブルを追加
+- Tagエンティティ
+- TagRepository
+
+次に、post_tags テーブルに対応するJPAエンティティを実装してください。
+
+要件
+- post_tags テーブルを表現する PostTag エンティティを作成する
+- 複合主キー (post_id, tag_id) をJPAの推奨方法で実装する
+- @Embeddable + @EmbeddedId を使用してください
+- PostTagId クラスも作成してください
+- Post、Tagとは @ManyToOne と @MapsId を使用して関連付けてください
+- Post や Tag に @ManyToMany は追加しないでください
+- 既存の Post エンティティのコーディングスタイルに合わせてください
+- 今回は Entity クラスのみ実装し、RepositoryやService、Controllerはまだ変更しないでください
+```
+**結果**: 効いた
+
+```
+• 提案
+  post_tags テーブル用に、複合主キークラスとエンティティを追加しました。Repository / Service / Controller / Post・Tag 側の関連は変更していません。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/domain/PostTagId.java:1
+      - @Embeddable
+      - postId, tagId
+      - getter のみ
+      - equals() / hashCode()
+
+  - src/main/java/com/example/tsubuyaki/domain/PostTag.java:1
+      - @Entity
+      - @Table(name = "post_tags")
+      - @EmbeddedId
+      - Post / Tag へ @ManyToOne(fetch = LAZY) + @MapsId
+      - protected no-args constructor + public constructor
+      - getter のみ
+      - id ベースの equals() / hashCode()
+
+  確認
+  コンパイル確認済みです。
+
+  ./mvnw -DskipTests compile
+
+  結果:
+
+  BUILD SUCCESS
+```
+
+**振り返り**:
+
+
+## プロンプト 12
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+PostTagエンティティの実装が完了しました。
+
+次にPostTagRepositoryを実装してください。
+
+要件
+- JpaRepository<PostTag, PostTagId> を継承
+- Tagから投稿一覧を取得する際に利用できるメソッドを追加してください
+- 投稿保存時にPostTagを登録できるようにしてください
+- Spring Data JPAの命名規則を利用してください
+- ServiceやControllerはまだ実装しません
+```
+**結果**: 効いた
+
+```
+• 提案
+  PostTagRepository を追加しました。Service / Controller は変更していません。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/repository/PostTagRepository.java:1
+      - JpaRepository<PostTag, PostTagId> を継承
+      - findByTag_NameOrderByPost_CreatedAtDesc(String name) を追加
+
+  このメソッドでタグ名から PostTag 一覧を取得し、Service 側で getPost() すればタグ別投稿一覧にできます。投稿保存時の PostTag 登録は JpaRepository 継承の save(PostTag) を使えま
+  す。
+
+  確認用に src/test/java/com/example/tsubuyaki/repository/PostTagRepositoryTest.java:1 も追加しました。
+
+  確認
+  対象テストは正常終了しました。
+
+  ./mvnw -Dtest=PostTagRepositoryTest test
+
+  結果:
+
+  Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+  BUILD SUCCESS
+
+```
+
+**振り返り**:
+
+## プロンプト 13
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+次に、投稿本文からタグを抽出する処理を実装してください。
+
+要件
+- "#tag" 形式のタグを抽出する
+- 同じタグが複数回出現した場合は重複を除去する
+- "#" を除いた文字列をタグ名として扱う
+- 正規表現を利用して実装する
+- この処理はServiceから利用できるようにする
+- 今回はタグ抽出ロジックのみ実装し、DB保存処理はまだ実装しない
+```
+**結果**: 効いた
+
+```
+• 提案
+  投稿本文からタグ名を抽出する専用部品として TagExtractor を追加しました。DB 保存処理や既存 Service への組み込みはまだ行っていません。
+
+  根拠
+  後続で PostService などから利用できるように、src/main/java/com/example/tsubuyaki/service/TagExtractor.java:1 を @Component として実装しています。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/service/TagExtractor.java:1
+      - 正規表現 #([\p{L}\p{N}_]+) で抽出
+      - # を除いたタグ名を返却
+      - LinkedHashSet で重複除去と初出順維持
+      - null / 空白本文は空リスト
+
+  - src/test/java/com/example/tsubuyaki/service/TagExtractorTest.java:1
+      - 複数タグ
+      - 重複除去
+      - タグなし
+      - null
+      - 句読点を含めないケース
+
+  確認
+  RED として TagExtractor 未定義のコンパイルエラーを確認後、実装して対象テストを通しました。
+
+  ./mvnw -Dtest=TagExtractorTest test
+
+  結果:
+
+  Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+  BUILD SUCCESS
+```
+
+**振り返り**:
+
+
+## プロンプト 14
+**フェーズ**:C1: タグ機能
+
+**プロンプト本文**:
+
+```
+「タグ名から関連する投稿一覧を取得する」機能を実装してください。
+
+要件
+- TagServiceを新規作成する
+- PostTagRepositoryを利用する
+- タグ名を受け取り、そのタグに紐づく投稿一覧(List<Post>)を返す
+- PostTagRepository.findByTag_NameOrderByPost_CreatedAtDesc() を利用する
+- PostTagからPostを取り出して返す
+- Serviceのみ実装し、ControllerやViewはまだ変更しない
+- 既存プロジェクトのコーディングスタイルに合わせる
+```
+
+**結果**: 効いた
+
+```
+• 提案
+  TagService を新規追加し、タグ名から関連投稿一覧を取得できるようにしました。Controller / View は変更していません。
+
+  差分
+  追加ファイル:
+
+  - src/main/java/com/example/tsubuyaki/service/TagService.java:1
+      - PostTagRepository をコンストラクタ注入
+      - findPostsByTagName(String name) を追加
+      - findByTag_NameOrderByPost_CreatedAtDesc(name) を利用
+      - PostTag::getPost で List<Post> に変換
+
+  - src/test/java/com/example/tsubuyaki/service/TagServiceTest.java:1
+      - PostTag から Post を取り出して返すことを検証
+      - 該当なしの場合に空リストを返すことを検証
+
+  確認
+  RED では TagService 未定義のコンパイルエラーを確認しました。修正後、対象テストは正常終了しています。
+
+  ./mvnw -Dtest=TagServiceTest test
+
+  結果:
+
+  Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+  BUILD SUCCESS
+
+```
+
+**振り返り**:
+
+
 ## プロンプト X
 **フェーズ**:
 
@@ -652,14 +1057,12 @@ planeモードに切り替えるのを失念しており、実装まで行われ
 ```
 
 ```
-**結果**: 効かなかった
+
+**結果**: 効いた
 
 ```
-
 ```
 
 **振り返り**:
-
-
 
 
