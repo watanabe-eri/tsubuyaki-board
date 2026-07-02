@@ -39,6 +39,17 @@ class PostServiceTest {
     }
 
     @Test
+    @DisplayName("投稿一覧_latest実行時_Repositoryがnullを返すと空配列を返す")
+    void 投稿一覧_latest実行時_Repositoryがnullを返すと空配列を返す() {
+        given(postRepository.findTop50ByOrderByCreatedAtDesc()).willReturn(null);
+
+        List<Post> latestPosts = postService.latest();
+
+        assertThat(latestPosts).isEmpty();
+        verify(postRepository).findTop50ByOrderByCreatedAtDesc();
+    }
+
+    @Test
     @DisplayName("投稿作成_save実行時_投稿者本文作成日時を持つPostを保存する")
     void 投稿作成_save実行時_投稿者本文作成日時を持つPostを保存する() {
         Instant before = Instant.now();
@@ -67,6 +78,28 @@ class PostServiceTest {
     }
 
     @Test
+    @DisplayName("投稿作成_save実行時_アバター色がnullなら既定色を保存する")
+    void 投稿作成_save実行時_アバター色がnullなら既定色を保存する() {
+        postService.save("alice", "共有事項があります", null);
+
+        org.mockito.ArgumentCaptor<Post> captor = org.mockito.ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(captor.capture());
+        Post savedPost = captor.getValue();
+        assertThat(savedPost.getAvatarColor()).isEqualTo("blue");
+    }
+
+    @Test
+    @DisplayName("投稿作成_save実行時_アバター色が空白なら既定色を保存する")
+    void 投稿作成_save実行時_アバター色が空白なら既定色を保存する() {
+        postService.save("alice", "共有事項があります", "   ");
+
+        org.mockito.ArgumentCaptor<Post> captor = org.mockito.ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(captor.capture());
+        Post savedPost = captor.getValue();
+        assertThat(savedPost.getAvatarColor()).isEqualTo("blue");
+    }
+
+    @Test
     @DisplayName("投稿詳細_findById実行時_Repositoryの検索結果を返す")
     void 投稿詳細_findById実行時_Repositoryの検索結果を返す() {
         Post post = new Post("alice", "hello", Instant.parse("2026-05-23T10:00:00Z"));
@@ -85,6 +118,18 @@ class PostServiceTest {
         given(postRepository.findTop50ByOrderByCreatedAtDesc()).willReturn(posts);
 
         List<Post> foundPosts = postService.search("   ");
+
+        assertThat(foundPosts).isEqualTo(posts);
+        verify(postRepository).findTop50ByOrderByCreatedAtDesc();
+    }
+
+    @Test
+    @DisplayName("投稿一覧_search実行時_キーワードnullなら新着一覧を返す")
+    void 投稿一覧_search実行時_キーワードnullなら新着一覧を返す() {
+        List<Post> posts = List.of(new Post("alice", "hello", Instant.parse("2026-05-23T10:00:00Z")));
+        given(postRepository.findTop50ByOrderByCreatedAtDesc()).willReturn(posts);
+
+        List<Post> foundPosts = postService.search(null);
 
         assertThat(foundPosts).isEqualTo(posts);
         verify(postRepository).findTop50ByOrderByCreatedAtDesc();

@@ -566,8 +566,82 @@ com.example.tsubuyaki.domain
 ```
 
 **振り返り**:
-テスト追加の計画を立ててほしかったが、テスト追加前の調査計画のような返しがきた。
+planeモードで実行しちゃ。テスト追加の計画を立ててほしかったが、テスト追加前の調査計画のような返しがきた。
 具体的なテスト追加計画について要求するプロンプトにする必要があったと思う。
+
+
+## プロンプト 6
+**フェーズ**:カバレッジ テスト拡充
+
+**プロンプト本文**:
+
+```
+com.example.tsubuyakiのカバレッジが80%達成できるよう、テスト追加の実装計画をたててください。
+追加予定のテスト件数、テストクラス名を計画に含めてください。
+カバレッジの確認はこのコマンドで行ってください。
+./mvnw -B -Ph2 -Pcoverage-day3 -Pstrict verify
+
+```
+**結果**: 効いた
+
+```
+  # com.example.tsubuyaki カバレッジ80%到達計画
+
+  com.example.tsubuyaki パッケージは TsubuyakiApplication だけで構成されており、現状は main メソッドの SpringApplication.run(...) 行が未カバーです。main を直接呼ぶ純 JUnit テ
+  ストを 1 件追加し、パッケージの行カバレッジを 80% 以上にします。
+
+  ## Key Changes
+
+  - 追加予定テストクラス: TsubuyakiApplicationMainTest
+  - 追加予定テスト件数: 1 件
+  - Spring コンテキストは起動しない。
+  - Mockito の static mock で SpringApplication.run(TsubuyakiApplication.class, args) を差し替え、main(args) が Spring Boot 起動処理を呼ぶことだけを検証する。
+  - 業務コード、設定、依存関係は変更しない。
+
+  ## Test Case
+
+  - アプリ起動_main実行時_SpringApplicationを起動する
+      - String[] args = {"--spring.profiles.active=h2"} を用意する。
+      - MockedStatic<SpringApplication> で SpringApplication.run(...) を static mock する。
+      - TsubuyakiApplication.main(args) を実行する。
+      - SpringApplication.run(TsubuyakiApplication.class, args) が 1 回呼ばれたことを検証する。
+
+  ## Verification
+
+  - 指定されたコマンドで確認する。
+
+  ./mvnw -B -Ph2 -Pcoverage-day3 -Pstrict verify
+```
+
+**振り返り**:
+プロンプト5の結果を受け、追加予定のクラス名、件数を盛り込んだ。
+
+
+
+## プロンプト 7
+**フェーズ**:カバレッジ テスト拡充
+
+**プロンプト本文**:
+
+```
+カバレッジを確認したところ、
+com.example.tsubuyaki.serviceの「Missed Branches」が66％でした。
+80％超を目標にテストを修正のための実装計画を立ててください。
+
+どのような修正をするか具体的に提示してください。
+修正後、カバレッジの確認は不要です。
+修正したテストファイルが正常終了することの確認をお願いします。
+
+```
+**結果**: 効かなかった
+
+```
+```
+
+**振り返り**:
+planeモードに切り替えるのを失念しており、実装まで行われてしまった。
+「実装計画を立ててください」と明記しても、実装されてしまうことを学習した。
+
 
 
 ## プロンプト X
