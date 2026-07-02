@@ -58,7 +58,7 @@ class PostTagRepositoryTest {
         postTagRepository.save(new PostTag(otherPost, oracle));
         postTagRepository.save(new PostTag(newPost, spring));
 
-        List<PostTag> postTags = postTagRepository.findByTag_NameOrderByPost_CreatedAtDesc("spring");
+        List<PostTag> postTags = postTagRepository.findByTagNameOrderByPostCreatedAtDesc("spring");
 
         assertThat(postTags).extracting(postTag -> postTag.getPost().getAuthor())
                 .containsExactly("carol", "alice");

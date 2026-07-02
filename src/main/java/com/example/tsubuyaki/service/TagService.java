@@ -24,7 +24,7 @@ public class TagService {
     }
 
     public List<Post> findPostsByTagName(String name) {
-        return postTagRepository.findByTag_NameOrderByPost_CreatedAtDesc(name).stream()
+        return postTagRepository.findByTagNameOrderByPostCreatedAtDesc(name).stream()
                 .map(PostTag::getPost)
                 .toList();
     }

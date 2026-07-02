@@ -10,5 +10,5 @@ import java.util.List;
 public interface PostTagRepository extends JpaRepository<PostTag, PostTagId> {
 
     @EntityGraph(attributePaths = "post")
-    List<PostTag> findByTag_NameOrderByPost_CreatedAtDesc(String name);
+    List<PostTag> findByTagNameOrderByPostCreatedAtDesc(String name);
 }

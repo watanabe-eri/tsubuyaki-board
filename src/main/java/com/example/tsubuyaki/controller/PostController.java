@@ -91,9 +91,6 @@ public class PostController {
 
     private Map<Long, List<String>> tagsByPostId(List<Post> posts) {
         Map<Long, List<String>> tagsByPostId = tagService.extractTagsByPostId(posts);
-        if (tagsByPostId == null) {
-            return Map.of();
-        }
         return new LinkedHashMap<>(tagsByPostId);
     }
 }

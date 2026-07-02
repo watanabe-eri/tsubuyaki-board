@@ -37,24 +37,24 @@ class TagServiceTest {
         Tag tag = new Tag("spring");
         Post latestPost = new Post("alice", "Spring Data JPA #spring", Instant.parse("2026-05-23T10:10:00Z"));
         Post oldPost = new Post("bob", "Spring Boot #spring", Instant.parse("2026-05-23T10:00:00Z"));
-        given(postTagRepository.findByTag_NameOrderByPost_CreatedAtDesc("spring"))
+        given(postTagRepository.findByTagNameOrderByPostCreatedAtDesc("spring"))
                 .willReturn(List.of(new PostTag(latestPost, tag), new PostTag(oldPost, tag)));
 
         List<Post> posts = tagService.findPostsByTagName("spring");
 
         assertThat(posts).containsExactly(latestPost, oldPost);
-        verify(postTagRepository).findByTag_NameOrderByPost_CreatedAtDesc("spring");
+        verify(postTagRepository).findByTagNameOrderByPostCreatedAtDesc("spring");
     }
 
     @Test
     @DisplayName("タグ別投稿一覧_タグ名に一致する投稿がない場合_空配列を返す")
     void タグ別投稿一覧_タグ名に一致する投稿がない場合_空配列を返す() {
-        given(postTagRepository.findByTag_NameOrderByPost_CreatedAtDesc("unknown")).willReturn(List.of());
+        given(postTagRepository.findByTagNameOrderByPostCreatedAtDesc("unknown")).willReturn(List.of());
 
         List<Post> posts = tagService.findPostsByTagName("unknown");
 
         assertThat(posts).isEmpty();
-        verify(postTagRepository).findByTag_NameOrderByPost_CreatedAtDesc("unknown");
+        verify(postTagRepository).findByTagNameOrderByPostCreatedAtDesc("unknown");
     }
 
     @Test
