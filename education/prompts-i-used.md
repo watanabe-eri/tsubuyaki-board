@@ -774,6 +774,7 @@ Postとの関連付け(@ManyToMany等)やRepositoryはまだ実装しません�
 ```
 
 **振り返り**:
+期待通りに実装できていた。
 
 
 
@@ -891,6 +892,7 @@ ServiceやController、Postとの関連付けはまだ実装しません。
 ```
 
 **振り返り**:
+期待通りに実装できていた。
 
 
 ## プロンプト 12
@@ -941,6 +943,8 @@ PostTagエンティティの実装が完了しました。
 ```
 
 **振り返り**:
+期待通りに実装できていた。
+
 
 ## プロンプト 13
 **フェーズ**:C1: タグ機能
@@ -995,6 +999,7 @@ PostTagエンティティの実装が完了しました。
 ```
 
 **振り返り**:
+期待通りに実装できていた。
 
 
 ## プロンプト 14
@@ -1047,22 +1052,87 @@ PostTagエンティティの実装が完了しました。
 ```
 
 **振り返り**:
+期待通りに実装できていた。
 
 
-## プロンプト X
-**フェーズ**:
+## プロンプト 15
+**フェーズ**:エラー修正
 
 **プロンプト本文**:
 
 ```
+› 以下のエラー、警告が検出されました。
 
+  [WARN] /mnt/c/workspace/tsubuyaki-board/src/main/java/com/example/tsubuyaki/repository/PostTagRepository.java:13:19: 名前 'findByTag_NameOrderByPost_CreatedAtDesc' はパター
+  ン '^[a-z][a-zA-Z0-9]*$' に一致しなければなりません。 [MethodName]
+  監査が完了しました。
+  [ERROR] Medium: null ではないことがわかっている値 tagsByPostId の冗長な null チェックがあります。com.example.tsubuyaki.controller.PostController.tagsByPostId(List)
+  [com.example.tsubuyaki.controller.PostController] 冗長な null チェックが行われている箇所 PostController.java:[line 94] RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE
+  [ERROR] Medium: null ではないことがわかっている値 tagsByPostId の冗長な null チェックがあります。com.example.tsubuyaki.controller.TagController.tagsByPostId(List)
+  [com.example.tsubuyaki.controller.TagController] 冗長な null チェックが行われている箇所 TagController.java:[line 34] RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE
+
+  これらのエラー解消のための具体的な修正計画をたててください。
+
+  修正するファイル、修正案を提示してください。
 ```
 
 **結果**: 効いた
 
 ```
+  # Checkstyle / SpotBugs 警告解消計画
+
+  ## Summary
+
+  品質チェックで検出された3件を、挙動を変えずに解消します。主な方針は、Spring Data JPA の派生クエリ名から _ を除去し、Controller の冗長な null チェックを削除することです。
+
+  ## 修正方針
+
+  - PostTagRepository
+      - findByTag_NameOrderByPost_CreatedAtDesc(String name) を findByTagNameOrderByPostCreatedAtDesc(String name) にリネームする。
+      - @EntityGraph(attributePaths = "post") は維持する。
+      - 戻り値 List<PostTag> と引数 String name は変更しない。
+      - Spring Data JPA のプロパティ探索で tag.name と post.createdAt を解決させ、Checkstyle の MethodName ルールに合わせる。
+
+  - TagService
+
+  - Repository / Service テスト
+      - PostTagRepositoryTest と TagServiceTest の mock / verify / 呼び出しを新メソッド名に更新する。
+      - テストの期待値やデータは変更しない。
+
+  - PostController / TagController
+      - tagsByPostId(...) 内の if (tagsByPostId == null) を削除する。
+      - return new LinkedHashMap<>(tagService.extractTagsByPostId(posts)); にする。
+      - LinkedHashMap へのコピーは維持し、テンプレート側で post.id == null のテストデータでも get(null) が安全に動く状態を保つ。
+
+  ## 修正対象ファイル
+
+  - src/main/java/com/example/tsubuyaki/repository/PostTagRepository.java
+  - src/main/java/com/example/tsubuyaki/service/TagService.java
+  - src/main/java/com/example/tsubuyaki/controller/PostController.java
+  - src/main/java/com/example/tsubuyaki/controller/TagController.java
+  - src/test/java/com/example/tsubuyaki/repository/PostTagRepositoryTest.java
+  - src/test/java/com/example/tsubuyaki/service/TagServiceTest.java
+
+  ## Test Plan
+
+  - 個別確認:
+      - ./mvnw -Dtest=PostTagRepositoryTest test
+      - ./mvnw -Dtest=TagServiceTest test
+      - ./mvnw -Dtest=PostControllerTest,TagControllerTest test
+
+  - 品質確認:
+      - ./mvnw -B -Ph2 verify
+      - 仕上げ確認が必要なら ./mvnw -B -Ph2 -Pstrict verify
+
+  ## Assumptions
+
+  - findByTagNameOrderByPostCreatedAtDesc は Spring Data JPA の派生クエリとして PostTag.tag.name と PostTag.post.createdAt を解決する前提。
+  - TagService.extractTagsByPostId(posts) は null を返さない設計として扱う。
+  - Controller / View の表示仕様、URL、model 属性名は変更しない。
+
 ```
 
 **振り返り**:
+期待通りに実装できていた。
 
 
