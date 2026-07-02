@@ -95,6 +95,7 @@ class PostControllerTest {
         given(postService.findById(1L)).willReturn(Optional.of(post));
         given(likeService.countByPostId(1L)).willReturn(3L);
         given(likeService.isLiked(eq(1L), anyString())).willReturn(true);
+        given(tagService.extractTagsByPostId(List.of(post))).willReturn(Map.of(1L, List.of()));
 
         mockMvc.perform(get("/posts/1"))
                 .andExpect(status().isOk())
@@ -102,6 +103,7 @@ class PostControllerTest {
                 .andExpect(model().attribute("post", post))
                 .andExpect(model().attribute("likeCount", 3L))
                 .andExpect(model().attribute("liked", true))
+                .andExpect(model().attribute("tagsByPostId", Map.of(1L, List.of())))
                 .andExpect(content().string(containsString("alice")))
                 .andExpect(content().string(containsString("共有事項があります")))
                 .andExpect(content().string(containsString("3")))
@@ -116,6 +118,27 @@ class PostControllerTest {
 
         mockMvc.perform(get("/posts/999"))
                 .andExpect(status().isNotFound());
+
+        verify(tagService, never()).extractTagsByPostId(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
+    @DisplayName("投稿詳細_本文にタグがある場合_本文の下にタグリンクを表示する")
+    void 投稿詳細_本文にタグがある場合_本文の下にタグリンクを表示する() throws Exception {
+        Post post = new Post("alice", "Spring Boot のメモ #java #spring", Instant.parse("2026-05-23T10:15:00Z"));
+        ReflectionTestUtils.setField(post, "id", 1L);
+        given(postService.findById(1L)).willReturn(Optional.of(post));
+        given(likeService.countByPostId(1L)).willReturn(3L);
+        given(likeService.isLiked(eq(1L), anyString())).willReturn(true);
+        given(tagService.extractTagsByPostId(List.of(post))).willReturn(Map.of(1L, List.of("java", "spring")));
+
+        mockMvc.perform(get("/posts/1"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("tagsByPostId", Map.of(1L, List.of("java", "spring"))))
+                .andExpect(content().string(containsString("href=\"/tags/java\"")))
+                .andExpect(content().string(containsString(">#java</a>")))
+                .andExpect(content().string(containsString("href=\"/tags/spring\"")))
+                .andExpect(content().string(containsString(">#spring</a>")));
     }
 
     @Test

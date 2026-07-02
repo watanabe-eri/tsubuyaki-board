@@ -66,10 +66,12 @@ public class PostController {
 
     @GetMapping("/posts/{id}")
     public String detail(@PathVariable Long id, Model model, HttpServletRequest request) {
-        model.addAttribute("post", postService.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        Post post = postService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        model.addAttribute("post", post);
         model.addAttribute("likeCount", likeService.countByPostId(id));
         model.addAttribute("liked", likeService.isLiked(id, clientHash(request)));
+        model.addAttribute("tagsByPostId", tagsByPostId(List.of(post)));
         return "posts/detail";
     }
 
